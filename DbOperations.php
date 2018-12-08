@@ -72,6 +72,26 @@
 			}
 		}
 
+		public function get_allitemof_cart($user_ID){
+            $stmt = $this->con;
+			$result = $stmt->query("SELECT Item_name, Price, Delivery_fee, Discount FROM Gros1.Item WHERE Item_ID IN (SELECT Item_ID FROM Gros1.Cart WHERE User_ID = ?) ;");
+			$stmt->bind_param("s", $user_ID);
+			$response["it"] = array();
+
+				while ($row = mysqli_fetch_array($result)) {
+					# code...
+					$item = array();
+					$item["Item_name"] = $row["Item_name"];
+					$item["Price"] = $row["Price"];
+					$item["Delivery_fee"] = $row["Delivery_fee"];
+					$item["Discount"] = $row["Discount"];
+
+					array_push($response["it"], $item);
+				}
+				$stmt->close();
+				return $response["it"];
+        }
+
         public function delItemInCart($uid,$cid){
         	$stmt = $this->con->prepare("DELETE FROM Gros1.Cart WHERE User_ID = ? AND Item_ID = ?;");
         	$stmt->bind_param("ss",$uid,$cid);
@@ -81,6 +101,9 @@
         		return 0;
         	}
         	$stmt->store_result();
+        	$stmt = $this->con->prepare("UPDATE Gros1.Item SET Amount = (Amount+1) WHERE Item_ID = ?;");
+        	$stmt->bind_param("s", $cid);
+        	$stmt->execute();
         	$stmt->close();
         }
 
@@ -135,6 +158,18 @@
 			return 0;
 			
 		}
+
+		public function get_total_price($User_ID){
+            $stmt = $this->con;
+			$result = $stmt->prepare("SELECT  SUM(Price * Discount + Delivery_fee) FROM Gros1.Item
+			WHERE Item_ID IN (SELECT Item_ID FROM Gros1.Cart WHERE User_ID = ?) ;");
+
+			$stmt->bind_param("s", $User_ID);
+			$stmt->execute();
+			$val = $stmt->get_result();
+			echo $val;
+			return $val;	
+        }
 
 		public function get_item_ID($Item_name){
 			$stmt = $this->con->prepare("SELECT Item_ID FROM Gros1.Item WHERE Item_name = ?;");
