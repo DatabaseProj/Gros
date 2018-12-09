@@ -18,11 +18,11 @@
 		}
 
 		/*CRUD -> C -> CREATE */
-
+        # create the new user
 		public function createUser($uid,$username, $pass, $email,$balance,$add,$phone){
-			$password = md5($pass);
+			#$password = md5($pass);
 			$stmt = $this->con->prepare("INSERT INTO Gros1.Customer (User_ID, User_Name, Email, User_password, Balance, Address, Phone) VALUES (?, ?, ?, ?, ?, ?, ?);");
-			$stmt->bind_param("sssssss",$uid,$username,$email,$password,$balance,$add,$phone);
+			$stmt->bind_param("sssssss",$uid,$username,$email,$pass,$balance,$add,$phone);
 
 			if ($stmt->execute()) {
 				$stmt->close();
@@ -33,7 +33,7 @@
 				return 0;
 			}
 		}
-
+        #user log in 
 		public function userLogin($username, $pass){
             #$password = md5($pass);
             $stmt = $this->con->prepare("SELECT User_ID FROM Gros1.Customer WHERE User_Name = ? AND User_password = ?;");
@@ -45,7 +45,7 @@
             return $row > 0; 
         }
 
-
+        #get user by input user name 
 		public function getUserByUsername($username){
             $stmt = $this->con->prepare("SELECT * FROM Gros1.Customer WHERE User_Name = ?;");
             $stmt->bind_param("s",$username);
@@ -55,30 +55,31 @@
             return $result;
         }
 
-        
+        # system add the items to cart
         public function addItemToCart($User_ID,$Item_ID){
 			if($this->isUserExist($User_ID,$Item_ID)){
 				return 0;
 			}else{ 
 			    $stmt =$this->con->prepare("INSERT INTO Gros1.Cart (User_ID, Item_ID) VALUES(?,?);");
 			    $stmt->bind_param("ss",$User_ID,$Item_ID);
-
-			    if($stmt->execute()){
-				    return 1; 
-			    }else{
-				    return 0; 
-			    }
+			    $stmt->execute();
+				$stmt->store_result();
+        		$stmt = $this->con->prepare("UPDATE Gros1.Item SET Amount = (Amount-1) WHERE Item_ID = ?;");
+        		$stmt->bind_param("s", $Item_ID);
+        		$stmt->execute();
 			    $stmt->close();
+			    return 1;
 			}
 		}
-
-		public function get_allitemof_cart($user_ID){
+        
+        # system add the items to cart
+        public function get_allitemof_cart($User_ID,$Item_ID){
             $stmt = $this->con;
 			$result = $stmt->query("SELECT Item_name, Price, Delivery_fee, Discount FROM Gros1.Item WHERE Item_ID IN (SELECT Item_ID FROM Gros1.Cart WHERE User_ID = ?) ;");
 			$stmt->bind_param("s", $user_ID);
 			$response["it"] = array();
 
-				while ($row = mysqli_fetch_array($result)) {
+			while ($row = mysqli_fetch_array($result)) {
 					# code...
 					$item = array();
 					$item["Item_name"] = $row["Item_name"];
@@ -88,18 +89,15 @@
 
 					array_push($response["it"], $item);
 				}
-				$stmt->close();
-				return $response["it"];
+			$stmt->close();
+			return $response["it"];
         }
 
+        #delete the items in user's cart and update the item amount
         public function delItemInCart($uid,$cid){
         	$stmt = $this->con->prepare("DELETE FROM Gros1.Cart WHERE User_ID = ? AND Item_ID = ?;");
         	$stmt->bind_param("ss",$uid,$cid);
-        	if($stmt->execute()){
-        		return 1;
-        	}else{
-        		return 0;
-        	}
+        	$stmt->execute();
         	$stmt->store_result();
         	$stmt = $this->con->prepare("UPDATE Gros1.Item SET Amount = (Amount+1) WHERE Item_ID = ?;");
         	$stmt->bind_param("s", $cid);
@@ -107,16 +105,26 @@
         	$stmt->close();
         }
 
+        public function buy($uid){
+        	$stmt = $this->con->prepare("DELETE FROM Gros1.Cart WHERE User_ID = ?;");
+        	$stmt->bind_param("s",$uid);
+        	$stmt->execute();
+        	$stmt->store_result();
+        	$stmt->close();
+        }
+
+        #get the each item information for the item page
         public function get_item_info($Item_name){
 			$stmt =$this->con->prepare("SELECT * FROM Gros1.Item WHERE Item_name = ?;");
 			$stmt->bind_param("s",$Item_name);
             $stmt->execute();
-            $stmt->store_result();
-            $result=$stmt->get_result()->fetch_assoc();
+            #$stmt->store_result();
+            $row=$stmt->get_result()->fetch_assoc();
             $stmt->close();
-            return $result;
+            return $row;
 		}
 
+        #get all items for the item page
 		public function get_list_of_item(){
 			$stmt = $this->con;
 			$result = $stmt->query("SELECT * FROM Gros1.Item;");
@@ -158,7 +166,7 @@
 			return 0;
 			
 		}
-
+        #get the total price in the user's cart when user want to pay 
 		public function get_total_price($User_ID){
             $stmt = $this->con;
 			$result = $stmt->prepare("SELECT  SUM(Price * Discount + Delivery_fee) FROM Gros1.Item
@@ -170,7 +178,8 @@
 			echo $val;
 			return $val;	
         }
-
+        
+        #get item ID
 		public function get_item_ID($Item_name){
 			$stmt = $this->con->prepare("SELECT Item_ID FROM Gros1.Item WHERE Item_name = ?;");
 			$stmt->bind_param("s",$Item_name);
@@ -224,7 +233,7 @@
 			$stmt->close();   
         }
 
-
+       
 		private function isUserExist($username,$email){
 			$stmt = $this->con->prepare("SELECT User_ID FROM Gros1.Customer WHERE User_Name = ? OR Email =?;");
 			$stmt->bind_param("ss",$username,$email);
