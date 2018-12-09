@@ -14,7 +14,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
             $response['Item_ID'] = $user['Item_ID'];
             $response['Item_name'] = $user['Item_name'];
             $response['Price'] = $user['Price'];
-            $response['User_password'] = $user['User_password'];
+            #$response['User_password'] = $user['User_password'];
             $response['Amount'] = $user['Amount'];
             $response['Delivery_fee'] = $user['Delivery_fee'];
             $response['Discount'] = $user['Discount'];

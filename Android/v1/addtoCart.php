@@ -13,20 +13,18 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 
         $db = new DbOperation(); 
 
-        $result = $db->addItemToCart(    $_POST['User_ID'],
+        
+            $result = $db->addItemToCart($_POST['User_ID'],
                                     $_POST['Item_ID']
                                 );
-        if($result == 1){
-            $response['error'] = false; 
-            $response['message'] = "User registered successfully";
-        }elseif($result == 2){
-            $response['error'] = true; 
-            $response['message'] = "Some error occurred please try again";          
-        }elseif($result == 0){
-            $response['error'] = true; 
-            $response['message'] = "It seems the items are already added in your cart, please choose other items 🙂";                        
-        }
-
+            if($result == 1){
+                $response['error'] = false; 
+                $response['message'] = "successfully added to cart";         
+            }elseif($result == 0){
+                $response['error'] = true; 
+                $response['message'] = "It seems the items are already added in your cart, please choose other items 🙂";                        
+            }
+        
     }else{
         $response['error'] = true; 
         $response['message'] = "Required fields are missing";

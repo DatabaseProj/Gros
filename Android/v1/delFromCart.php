@@ -11,7 +11,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 		$db = new DbOperation();
 		if($db->delItemInCart($_POST['User_ID'], $_POST['Item_ID'])){
 			$response['error'] = false;
-			$response['message'] = "User registered successfully";
+			$response['message'] = "Delete successfully";
 		}else{
 			$response['error'] = true; 
             $response['message'] = "Invalid username or password";   
@@ -22,3 +22,5 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
         $response['message'] = "Required fields are missing";
 	}
 }
+
+echo json_encode($response);
